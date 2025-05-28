@@ -1,16 +1,35 @@
-// server.cjs
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+// ✅ Replace this with your actual Netlify frontend domain:
+const allowedOrigin = 'https://moviemx.netlify.app/';
+
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ['GET', 'POST'],
+  credentials: true,
+}));
+
+// ✅ Test route for browser confirmation
+app.get('/', (req, res) => {
+  res.send('✅ Live Room Backend is working!');
+});
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
-  cors: { origin: '*' },
+  cors: {
+    origin: allowedOrigin,
+    methods: ['GET', 'POST'],
+  },
 });
+
+// ✅ Dynamic port for Render
+const PORT = process.env.PORT || 4000;
 
 const rooms = {};
 
@@ -107,7 +126,6 @@ io.on('connection', (socket) => {
 
         io.to(roomId).emit('room_users', Object.values(room.users));
 
-        // Clean up empty rooms
         if (Object.keys(room.users).length === 0) {
           delete rooms[roomId];
         }
@@ -117,9 +135,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
-
+// ✅ Start the server
 server.listen(PORT, () => {
   console.log(`Socket.IO server running on port ${PORT}`);
 });
-
